@@ -275,6 +275,10 @@ def run_ncf(_):
       num_gpus=FLAGS.num_gpus)
   params["distribute_strategy"] = strategy
 
+  if not keras_utils.is_v2_0() and strategy is not None:
+    logging.error("NCF Keras only works with distribution strategy in TF 2.0")
+    return
+
   if (params["keras_use_ctl"] and (
       not keras_utils.is_v2_0() or strategy is None)):
     logging.error(
@@ -409,7 +413,8 @@ def run_ncf(_):
     with distribution_utils.get_strategy_scope(strategy):
 
       keras_model.compile(optimizer=optimizer,
-                          run_eagerly=FLAGS.run_eagerly)
+                          run_eagerly=FLAGS.run_eagerly,
+                          run_distributed=FLAGS.force_v2_in_keras_compile)
 
       history = keras_model.fit(train_input_dataset,
                                 epochs=FLAGS.train_epochs,
